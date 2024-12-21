@@ -1,8 +1,12 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'core/firebase/config/firebase_config.dart';
 import 'core/auth/views/login_view.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseConfig.init();
   runApp(const MyApp());
 }
 
@@ -11,7 +15,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Surv',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -33,7 +37,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginView(), // Set LoginView as the initial route
+      home: const LoginView(),
     );
   }
 }

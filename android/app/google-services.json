@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "381789734289",
+    "project_id": "surv-f4d47",
+    "storage_bucket": "surv-f4d47.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381789734289:android:bf858a75945edc2f4c8630",
+        "android_client_info": {
+          "package_name": "io.circlehq.surv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT2xCpIpIcIcJUXpf03T_42K973hJLhNk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
