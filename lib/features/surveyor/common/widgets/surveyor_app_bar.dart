@@ -1,14 +1,13 @@
-// lib/features/admin/common/widgets/admin_app_bar.dart
+// lib/features/surveyor/common/widgets/surveyor_app_bar.dart
 import 'package:flutter/material.dart';
+import '../../../admin/admin_main_view.dart';
 import '../../../../core/auth/views/login_view.dart';
-import '../../admin_main_view.dart';
-import '../../../surveyor/main/views/surveyor_main_view.dart';
 
-class AdminAppBar extends StatelessWidget {
+class SurveyorAppBar extends StatelessWidget {
   final String title;
   final String userName;
 
-  const AdminAppBar({
+  const SurveyorAppBar({
     Key? key,
     required this.title,
     required this.userName,
@@ -56,17 +55,10 @@ class AdminAppBar extends StatelessWidget {
               ),
               onSelected: (String value) {
                 switch (value) {
-                  case 'edit_profile':
+                  case 'switch_admin':
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => const AdminMainView(initialIndex: 3), // Settings tab
-                      ),
-                    );
-                    break;
-                  case 'switch_surveyor':
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const SurveyorMainView(),
+                        builder: (context) => const AdminMainView(initialIndex: 0),
                       ),
                     );
                     break;
@@ -80,23 +72,13 @@ class AdminAppBar extends StatelessWidget {
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'edit_profile',
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, size: 20),
-                      SizedBox(width: 12),
-                      Text('Edit Profile'),
-                    ],
-                  ),
-                ),
                 const PopupMenuItem<String>(
-                  value: 'switch_surveyor',
+                  value: 'switch_admin',
                   child: Row(
                     children: [
                       Icon(Icons.swap_horiz, size: 20),
                       SizedBox(width: 12),
-                      Text('Switch to Surveyor'),
+                      Text('Switch to Admin'),
                     ],
                   ),
                 ),

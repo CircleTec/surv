@@ -1,6 +1,7 @@
 // lib/core/auth/views/login_view.dart
 import 'package:flutter/material.dart';
 import '../../../features/admin/admin_main_view.dart';
+import '../../../features/surveyor/main/views/surveyor_main_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -16,14 +17,20 @@ class _LoginViewState extends State<LoginView> {
   void _handleLogin() {
     // Mock authentication check
     if (phoneController.text == '1234' && passwordController.text == '4321') {
+      // Admin login
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const AdminMainView(initialIndex: 0)),
+      );
+    } else if (phoneController.text == '7890' && passwordController.text == '0987') {
+      // Surveyor login
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const SurveyorMainView()),
       );
     } else {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid credentials. Use 1234/4321 for demo.'),
+          content: Text('Invalid credentials.\nAdmin: 1234/4321\nSurveyor: 7890/0987'),
           backgroundColor: Colors.red,
         ),
       );
