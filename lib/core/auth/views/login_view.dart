@@ -103,7 +103,7 @@ class _LoginViewState extends State<LoginView> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8,width: double.infinity),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: phoneController,
                         keyboardType: TextInputType.phone,
@@ -168,6 +168,7 @@ class _LoginViewState extends State<LoginView> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32),
                         ),
+                        minimumSize: const Size.fromHeight(0),
                       ),
                       child: const Text(
                         'LOG IN',
