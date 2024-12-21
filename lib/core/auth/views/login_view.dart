@@ -17,7 +17,7 @@ class _LoginViewState extends State<LoginView> {
     // Mock authentication check
     if (phoneController.text == '1234' && passwordController.text == '4321') {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const AdminMainView()),
+        MaterialPageRoute(builder: (context) => const AdminMainView(initialIndex: 0)),
       );
     } else {
       // Show error message

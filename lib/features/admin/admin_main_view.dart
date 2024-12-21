@@ -7,14 +7,25 @@ import 'surveyor_management/views/surveyor_management_view.dart';
 import 'settings/views/settings_view.dart';
 
 class AdminMainView extends StatefulWidget {
-  const AdminMainView({Key? key}) : super(key: key);
+  final int initialIndex;
+
+  const AdminMainView({
+    Key? key,
+    required this.initialIndex,
+  }) : super(key: key);
 
   @override
   State<AdminMainView> createState() => _AdminMainViewState();
 }
 
 class _AdminMainViewState extends State<AdminMainView> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   final List<Widget> _screens = const [
     DashboardView(),  // Using the actual DashboardView from dashboard/views/
