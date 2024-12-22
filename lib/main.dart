@@ -38,8 +38,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      //home: const LoginView(),
-      home: const FirebaseTestView(),
+      home: const LoginView(),
+      //home: const FirebaseTestView(),
     );
   }
 }
