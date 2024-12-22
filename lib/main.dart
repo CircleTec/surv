@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'core/firebase/config/firebase_config.dart';
 import 'core/auth/views/login_view.dart';
+import 'core/firebase/firebase/test/firebase_test_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginView(),
+      //home: const LoginView(),
+      home: const FirebaseTestView(),
     );
   }
 }
