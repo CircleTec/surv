@@ -1,113 +1,144 @@
+// lib/core/firebase/services/firebase_auth.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
-import '../utilities/phone_utility.dart';
+import 'package:flutter/cupertino.dart';
+import '../../firebase/models/firebase_error.dart';
+import '../../constants/user_roles.dart';
+import '../../auth/models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  Future<UserModel?> signIn(String phoneNumber, String password) async {
+  // Add getCurrentUser method
+  Future<UserModel?> getCurrentUser() async {
     try {
-      print("[Auth Debug] Attempting sign in for phone: $phoneNumber");
-      String email = PhoneUtility.createFirebaseAuthEmail(phoneNumber);
-      print("[Auth Debug] Using email: $email");
+      final user = _auth.currentUser;
+      if (user == null) return null;
 
-      final UserCredential result = await _auth.signInWithEmailAndPassword(
-          email: email,
-          password: password
-      );
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      if (!doc.exists) return null;
 
-      if (result.user == null) {
-        throw Exception('Authentication failed');
-      }
-
-      print("[Auth Debug] Auth successful for UID: ${result.user!.uid}");
-
-      // Get user document using Auth UID
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(result.user!.uid)
-          .get();
-
-      if (!userDoc.exists) {
-        print("[Auth Debug] No Firestore document found for UID: ${result.user!.uid}");
-        throw Exception('User data not found');
-      }
-
-      print("[Auth Debug] Found Firestore document: ${userDoc.data()}");
-
-      // Update last login
-      await userDoc.reference.update({
-        'lastLogin': FieldValue.serverTimestamp(),
-        'email': email
-      });
-
-      print("[Auth Debug] Updated last login timestamp");
-
-      final userModel = UserModel.fromMap(result.user!.uid, userDoc.data()!);
-      print("[Auth Debug] Created UserModel with role: ${userModel.role}");
-
-      return userModel;
-    } on FirebaseAuthException catch (e) {
-      print("[Auth Debug] Firebase Auth Error: ${e.code} - ${e.message}");
-      switch (e.code) {
-        case 'user-not-found':
-          throw Exception('No user found with this phone number');
-        case 'wrong-password':
-          throw Exception('Invalid password');
-        case 'invalid-email':
-          throw Exception('Invalid phone number format');
-        case 'user-disabled':
-          throw Exception('This account has been disabled');
-        default:
-          throw Exception('Authentication failed: ${e.message}');
-      }
+      return UserModel.fromMap(user.uid, doc.data()!);
     } catch (e) {
-      print("[Auth Debug] General Error: $e");
-      throw Exception('Authentication failed: $e');
+      throw FirebaseError(message: 'Failed to get current user: $e');
     }
   }
 
-  Future<UserModel?> getCurrentUser() async {
+  // Add signIn method that returns UserModel
+  Future<UserModel?> signIn(String phoneNumber, String password) async {
     try {
-      final User? currentUser = _auth.currentUser;
-      print("[Auth Debug] Current Firebase user: ${currentUser?.uid}");
+      final email = '$phoneNumber@surv.app';
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      if (currentUser == null) return null;
+      if (userCredential.user == null) return null;
 
-      // Get user document directly by Auth UID
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
+      // Update last login
+      await _firestore.collection('users').doc(userCredential.user!.uid).update({
+        'lastLogin': FieldValue.serverTimestamp(),
+      });
 
-      if (!userDoc.exists) {
-        print("[Auth Debug] No Firestore document found for UID: ${currentUser.uid}");
-        return null;
+      // Return user model
+      return getCurrentUser();
+    } catch (e) {
+      throw FirebaseError(message: 'Sign in failed: $e');
+    }
+  }
+
+  Future<String> getUserRole(String uid) async {
+    try {
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      return userDoc.data()?['role'] ?? '';
+    } catch (e) {
+      throw FirebaseError(message: 'Failed to get user role: $e');
+    }
+  }
+
+  Future<bool> isAdmin(String uid) async {
+    try {
+      final role = await getUserRole(uid);
+      return role == UserRoles.admin;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(String) onCodeSent,
+    required Function(String) onError,
+  }) async {
+    try {
+      // Ensure only admins can add new users
+      final currentUid = _auth.currentUser?.uid;
+      if (currentUid == null || !await isAdmin(currentUid)) {
+        throw FirebaseError(
+          message: 'Unauthorized: Only admins can add new users',
+        );
       }
 
-      print("[Auth Debug] Found user document: ${userDoc.data()}");
-
-      final userModel = UserModel.fromMap(currentUser.uid, userDoc.data()!);
-      print("[Auth Debug] Created UserModel with role: ${userModel.role}");
-      return userModel;
-
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          onError(e.message ?? 'Verification failed');
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          onCodeSent(verificationId);
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
     } catch (e) {
-      print("[Auth Debug] Error getting user data: $e");
-      throw Exception('Failed to retrieve user data: $e');
+      throw FirebaseError(message: 'Phone verification failed: $e');
+    }
+  }
+
+  Future<void> verifyOTP({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+      await _auth.signInWithCredential(credential);
+    } catch (e) {
+      throw FirebaseError(message: 'OTP verification failed: $e');
     }
   }
 
   Future<void> signOut() async {
     try {
-      print("[Auth Debug] Signing out");
       await _auth.signOut();
     } catch (e) {
-      print("[Auth Debug] Error signing out: $e");
-      throw Exception('Failed to sign out: $e');
+      throw FirebaseError(message: 'Sign out failed: $e');
+    }
+  }
+
+  // For checking access in the UI
+  static Future<bool> checkAdminAccess(BuildContext context) async {
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final user = auth.currentUser;
+      if (user == null) {
+        return false;
+      }
+
+      final userDoc = await firestore.collection('users').doc(user.uid).get();
+      return userDoc.data()?['role'] == UserRoles.admin;
+    } catch (e) {
+      return false;
     }
   }
 }

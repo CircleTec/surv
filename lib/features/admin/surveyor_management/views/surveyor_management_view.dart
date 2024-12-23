@@ -1,5 +1,7 @@
 // lib/features/admin/surveyor_management/views/surveyor_management_view.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'add_surveyor_view.dart';
 
 class SurveyorManagementView extends StatefulWidget {
   const SurveyorManagementView({Key? key}) : super(key: key);
@@ -10,6 +12,42 @@ class SurveyorManagementView extends StatefulWidget {
 
 class _SurveyorManagementViewState extends State<SurveyorManagementView> {
   int _selectedTab = 0;
+  final TextEditingController _searchController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<DocumentSnapshot> _surveyors = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSurveyors();
+  }
+
+  Future<void> _loadSurveyors() async {
+    try {
+      setState(() => _isLoading = true);
+
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'surveyor')
+          .get();
+
+      setState(() {
+        _surveyors = querySnapshot.docs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleSearch(String value) {
+    // Implement search functionality
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +75,8 @@ class _SurveyorManagementViewState extends State<SurveyorManagementView> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
+                            controller: _searchController,
+                            onChanged: _handleSearch,
                             decoration: InputDecoration(
                               hintText: 'Search with id number',
                               hintStyle: TextStyle(color: Colors.grey[400]),
@@ -51,32 +91,47 @@ class _SurveyorManagementViewState extends State<SurveyorManagementView> {
                 ),
                 const SizedBox(width: 12),
                 // Invite Button
-                Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5EE0C5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: const [
-                            Text(
-                              'Invite',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.add, color: Colors.white, size: 20),
-                          ],
-                        ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddSurveyorView(),
                       ),
-                    ],
+                    ).then((value) {
+                      if (value == true) {
+                        // Refresh the list if a new surveyor was added
+                        _loadSurveyors();
+                      }
+                    });
+                  },
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5EE0C5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: const [
+                              Text(
+                                'Invite',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(Icons.add, color: Colors.white, size: 20),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -93,24 +148,43 @@ class _SurveyorManagementViewState extends State<SurveyorManagementView> {
             ),
             const SizedBox(height: 20),
 
+            // Error Message
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+
+            // Loading Indicator
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(),
+              ),
+
             // Surveyor Cards
-            _buildSurveyorCard(
-              name: 'John Doe',
-              email: 'nathandamtew@gmail.com',
-              phone: '+251921331494',
-              location: 'Kirkos, Addis Abeba',
-              surveys: '145 Surveys',
-              groups: const ['Customer Satisfaction', 'Field Equipemnt'],
-            ),
-            const SizedBox(height: 16),
-            _buildSurveyorCard(
-              name: 'John Doe',
-              email: 'nathandamtew@gmail.com',
-              phone: '+251921331494',
-              location: 'Kirkos, Addis Abeba',
-              surveys: '145 Surveys',
-              groups: const ['Customer Satisfaction', 'Field Equipemnt'],
-            ),
+            if (!_isLoading && _surveyors.isEmpty)
+              const Center(
+                child: Text('No surveyors found'),
+              ),
+
+            if (!_isLoading && _surveyors.isNotEmpty)
+              ...List<Widget>.from(_surveyors.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildSurveyorCard(
+                    name: data['fullName'] ?? 'N/A',
+                    email: data['email'] ?? 'N/A',
+                    phone: data['phoneNumber'] ?? 'N/A',
+                    location: data['location'] ?? 'N/A',
+                    surveys: '${data['surveyCount'] ?? 0} Surveys',
+                    groups: List<String>.from(data['groups'] ?? []),
+                  ),
+                );
+              })),
           ],
         ),
       ),
@@ -251,5 +325,11 @@ class _SurveyorManagementViewState extends State<SurveyorManagementView> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

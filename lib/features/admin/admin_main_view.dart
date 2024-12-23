@@ -28,7 +28,7 @@ class _AdminMainViewState extends State<AdminMainView> {
   }
 
   final List<Widget> _screens = const [
-    DashboardView(),  // Using the actual DashboardView from dashboard/views/
+    DashboardView(),
     SurveyManagementView(),
     SurveyorManagementView(),
     SettingsView(),
@@ -51,7 +51,6 @@ class _AdminMainViewState extends State<AdminMainView> {
   Widget build(BuildContext context) {
     return AdminScaffold(
       title: _titles[_currentIndex],
-      userName: 'Nathan',
       currentIndex: _currentIndex,
       onNavigationChanged: _onNavigationChanged,
       body: _screens[_currentIndex],

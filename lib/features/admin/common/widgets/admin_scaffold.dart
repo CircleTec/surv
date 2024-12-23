@@ -5,7 +5,6 @@ import 'admin_bottom_nav.dart';
 
 class AdminScaffold extends StatelessWidget {
   final String title;
-  final String userName;
   final Widget body;
   final int currentIndex;
   final Function(int) onNavigationChanged;
@@ -13,7 +12,6 @@ class AdminScaffold extends StatelessWidget {
   const AdminScaffold({
     Key? key,
     required this.title,
-    required this.userName,
     required this.body,
     required this.currentIndex,
     required this.onNavigationChanged,
@@ -30,7 +28,6 @@ class AdminScaffold extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: AdminAppBar(
                 title: title,
-                userName: userName,
               ),
             ),
             Expanded(
