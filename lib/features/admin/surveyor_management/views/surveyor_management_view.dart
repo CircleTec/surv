@@ -1,6 +1,7 @@
 // lib/features/admin/surveyor_management/views/surveyor_management_view.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/auth/models/user_model.dart';
 import 'add_surveyor_view.dart';
 
 class SurveyorManagementView extends StatefulWidget {
@@ -29,8 +30,7 @@ class _SurveyorManagementViewState extends State<SurveyorManagementView> {
       setState(() => _isLoading = true);
 
       final querySnapshot = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'surveyor')
+          .collection('surveyors')
           .get();
 
       setState(() {

@@ -102,7 +102,7 @@ class _AddSurveyorViewState extends State<AddSurveyorView> {
         throw FirebaseError(message: 'Failed to create user account');
       }
 
-      // Create user model
+      // Create user model for surveyor
       final newUser = UserModel(
         id: userCredential.user!.uid,
         email: email,
@@ -115,22 +115,14 @@ class _AddSurveyorViewState extends State<AddSurveyorView> {
         lastLogin: DateTime.now(),
       );
 
-      // Create user document in Firestore
-      await _firestoreService.createUser(
+      // Create surveyor in Firestore
+      await _firestoreService.createSurveyor(
         userCredential.user!.uid,
         newUser.toMap(),
       );
 
-      // Create analytics document
-      await _firestoreService.createUser(
-        'analytics/surveyors/${userCredential.user!.uid}/stats',
-        {
-          'completedSurveys': 0,
-          'averageResponseTime': 0,
-          'responseQuality': 0,
-          'groups': _selectedGroups,
-        },
-      );
+      // Create analytics for the surveyor
+      await _firestoreService.createSurveyorStats(userCredential.user!.uid);
 
       // Success - close dialog and refresh parent
       Navigator.of(context).pop(true);

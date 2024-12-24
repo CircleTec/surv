@@ -6,20 +6,20 @@ class UserModel {
   final String phoneNumber;
   final String fullName;
   final String role;
-  final String email;  // Changed from optional to required
+  final String email;
   final String? location;
   final bool notificationsEnabled;
   final DateTime createdAt;
   final DateTime lastLogin;
   final String? profileImage;
-  final Map<String, dynamic>? subscriptionInfo;  // Added for admin users
+  final Map<String, dynamic>? subscriptionInfo;
 
   UserModel({
     required this.id,
     required this.phoneNumber,
     required this.fullName,
     required this.role,
-    required this.email,  // Now required
+    required this.email,
     this.location,
     this.notificationsEnabled = true,
     required this.createdAt,
@@ -27,6 +27,14 @@ class UserModel {
     this.profileImage,
     this.subscriptionInfo,
   });
+
+  // Role getters
+  bool get isAdmin => role == 'admin' || role == 'super_admin';
+  bool get isSuperAdmin => role == 'super_admin';
+  bool get isSurveyor => role == 'surveyor';
+
+  // Collection name getter
+  String get collectionName => isAdmin ? 'admins' : 'surveyors';
 
   Map<String, dynamic> toMap() {
     final map = {
@@ -41,7 +49,6 @@ class UserModel {
       'profileImage': profileImage,
     };
 
-    // Only include subscriptionInfo if it exists
     if (subscriptionInfo != null) {
       map['subscriptionInfo'] = subscriptionInfo;
     }
@@ -64,4 +71,45 @@ class UserModel {
       subscriptionInfo: map['subscriptionInfo'],
     );
   }
+
+  // Copy with method for making modified copies
+  UserModel copyWith({
+    String? phoneNumber,
+    String? fullName,
+    String? role,
+    String? email,
+    String? location,
+    bool? notificationsEnabled,
+    DateTime? lastLogin,
+    String? profileImage,
+    Map<String, dynamic>? subscriptionInfo,
+  }) {
+    return UserModel(
+      id: this.id,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      email: email ?? this.email,
+      location: location ?? this.location,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      createdAt: this.createdAt,
+      lastLogin: lastLogin ?? this.lastLogin,
+      profileImage: profileImage ?? this.profileImage,
+      subscriptionInfo: subscriptionInfo ?? this.subscriptionInfo,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'UserModel(id: $id, phoneNumber: $phoneNumber, fullName: $fullName, role: $role)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is UserModel && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
